@@ -10,6 +10,20 @@ import (
 	"github.com/line/line-bot-sdk-go/linebot/httphandler"
 )
 
+// グループ・トークルームから退出させる
+func leaveGroup(bot *linebot.Client, eventSource *linebot.EventSource) {
+	switch eventSource.Type {
+	case linebot.EventSourceTypeGroup:
+		if _, err := bot.LeaveGroup(eventSource.GroupID).Do(); err != nil {
+			log.Print(err)
+		}
+	case linebot.EventSourceTypeRoom:
+		if _, err := bot.LeaveRoom(eventSource.RoomID).Do(); err != nil {
+			log.Print(err)
+		}
+	}
+}
+
 func main() {
 	// HTTP Handlerの初期化
 	handler, err := httphandler.New(
@@ -41,6 +55,11 @@ func main() {
 
 			switch message := event.Message.(type) {
 			case *linebot.TextMessage:
+				if message.Text == "leave" {
+					leaveGroup(bot, event.Source)
+					return
+				}
+
 				replyText := message.Text
 				if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(replyText)).Do(); err != nil {
 					log.Print(err)
